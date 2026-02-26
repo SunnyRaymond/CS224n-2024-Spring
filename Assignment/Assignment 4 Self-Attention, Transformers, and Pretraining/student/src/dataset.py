@@ -99,10 +99,49 @@ class CharCorruptionDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        # TODO [part e]: see spec above
-        ### YOUR CODE HERE ###
-        pass
-        ### END YOUR CODE ###
+        # 0) fetch document
+        doc = self.data[idx]
+        # (optional safety) if empty lines exist, fall back to another line
+        if len(doc) == 0:
+            doc = "abcd"
+
+        # 1) random truncate length in [4, int(block_size*7/8)]
+        max_len = int(self.block_size * 7 / 8)
+        # ensure feasible upper bound given doc length
+        upper = min(max_len, len(doc))
+        # if doc too short, pad by reusing itself (rare) or clamp to len(doc)
+        if upper < 4:
+            # make it at least 4 chars by repeating
+            doc = (doc * ((4 // max(1, len(doc))) + 1))[:4]
+            upper = min(max_len, len(doc))
+        L = random.randint(4, upper)
+        doc = doc[:L]
+
+        # 2) choose masked span length random; average about L/4
+        # pick mask_len uniformly from [1, max(1, L//2)] so mean ~ (1 + L//2)/2 ≈ L/4
+        max_mask = max(1, L // 2)
+        mask_len = random.randint(1, max_mask)
+
+        # choose start so span fits
+        start = random.randint(0, L - mask_len)
+        end = start + mask_len
+
+        prefix = doc[:start]
+        masked_content = doc[start:end]
+        suffix = doc[end:]
+
+        # 3) construct masked_string of length block_size + 1
+        masked_string = prefix + self.MASK_CHAR + suffix + self.MASK_CHAR + masked_content
+        masked_string = masked_string + self.PAD_CHAR * (self.block_size + 1 - len(masked_string))
+
+        # 4) input/output are shifted by 1
+        x_str = masked_string[:-1]
+        y_str = masked_string[1:]
+
+        # 5) encode to Long tensors
+        x = torch.tensor([self.stoi[c] for c in x_str], dtype=torch.long)
+        y = torch.tensor([self.stoi[c] for c in y_str], dtype=torch.long)
+        return x, y
 
 
 # The input-output pairs (x, y) of the NameDataset are of the following form:
