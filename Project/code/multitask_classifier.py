@@ -73,7 +73,16 @@ class MultitaskBERT(nn.Module):
                 param.requires_grad = True
         # You will want to add layers here to perform the downstream tasks.
         ### TODO
-        raise NotImplementedError
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+
+        # Sentiment head: 768 -> 5 logits
+        self.sentiment_classifier = nn.Linear(BERT_HIDDEN_SIZE, N_SENTIMENT_CLASSES)
+
+        # Paraphrase head: (e1,e2,|e1-e2|) => 3*768 -> 1 logit
+        self.paraphrase_classifier = nn.Linear(3 * BERT_HIDDEN_SIZE, 1)
+
+        # STS head: same featureization -> 1 logit
+        self.similarity_regressor = nn.Linear(3 * BERT_HIDDEN_SIZE, 1)
 
 
     def forward(self, input_ids, attention_mask):
@@ -83,6 +92,10 @@ class MultitaskBERT(nn.Module):
         # When thinking of improvements, you can later try modifying this
         # (e.g., by adding other layers).
         ### TODO
+        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+        emb = outputs["pooler_output"]          # [bs, 768]
+        emb = self.dropout(emb)
+        return emb
         raise NotImplementedError
 
 
@@ -93,6 +106,9 @@ class MultitaskBERT(nn.Module):
         Thus, your output should contain 5 logits for each sentence.
         '''
         ### TODO
+        emb = self.forward(input_ids, attention_mask)  # [bs, 768]
+        logits = self.sentiment_classifier(emb)        # [bs, 5]
+        return logits
         raise NotImplementedError
 
 
@@ -104,6 +120,11 @@ class MultitaskBERT(nn.Module):
         during evaluation.
         '''
         ### TODO
+        e1 = self.forward(input_ids_1, attention_mask_1)  # [bs, 768]
+        e2 = self.forward(input_ids_2, attention_mask_2)  # [bs, 768]
+        feats = torch.cat([e1, e2, torch.abs(e1 - e2)], dim=1)  # [bs, 3*768]
+        logit = self.paraphrase_classifier(feats).squeeze(-1)   # [bs]
+        return logit
         raise NotImplementedError
 
 
@@ -114,6 +135,11 @@ class MultitaskBERT(nn.Module):
         Note that your output should be unnormalized (a logit).
         '''
         ### TODO
+        e1 = self.forward(input_ids_1, attention_mask_1)  # [bs, 768]
+        e2 = self.forward(input_ids_2, attention_mask_2)  # [bs, 768]
+        feats = torch.cat([e1, e2, torch.abs(e1 - e2)], dim=1)  # [bs, 3*768]
+        logit = self.similarity_regressor(feats).squeeze(-1)    # [bs]
+        return logit
         raise NotImplementedError
 
 

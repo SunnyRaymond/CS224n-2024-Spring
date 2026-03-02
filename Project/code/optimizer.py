@@ -60,7 +60,43 @@ class AdamW(Optimizer):
                 # Refer to the default project handout for more details.
 
                 ### TODO
-                raise NotImplementedError
+                # Initialize state on first use
+                if len(state) == 0:
+                    state["step"] = 0
+                    state["exp_avg"] = torch.zeros_like(p.data)      # m_t
+                    state["exp_avg_sq"] = torch.zeros_like(p.data)   # v_t
 
+                beta1, beta2 = group["betas"]
+                eps = group["eps"]
+                weight_decay = group["weight_decay"]
+                correct_bias = group["correct_bias"]
+
+                state["step"] += 1
+                t = state["step"]
+
+                exp_avg = state["exp_avg"]
+                exp_avg_sq = state["exp_avg_sq"]
+
+                # 1) Update biased first moment estimate (m_t)
+                exp_avg.mul_(beta1).add_(grad, alpha=(1.0 - beta1))
+
+                # 2) Update biased second raw moment estimate (v_t)
+                exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=(1.0 - beta2))
+
+                # 3) Bias correction (efficient form)
+                if correct_bias:
+                    bias_correction1 = 1.0 - beta1 ** t
+                    bias_correction2 = 1.0 - beta2 ** t
+                    alpha_t = alpha * math.sqrt(bias_correction2) / bias_correction1
+                else:
+                    alpha_t = alpha
+
+                # Parameter update: p = p - alpha_t * m / (sqrt(v) + eps)
+                denom = exp_avg_sq.sqrt().add_(eps)
+                p.data.addcdiv_(exp_avg, denom, value=-alpha_t)
+
+                # 4) Decoupled weight decay
+                if weight_decay != 0.0:
+                    p.data.add_(p.data, alpha=-alpha * weight_decay)
 
         return loss
