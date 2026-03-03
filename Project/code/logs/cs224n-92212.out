@@ -1,0 +1,75 @@
+Job started on node221
+Time: Tue Mar  3 12:57:47 CET 2026
+Tue Mar  3 12:57:50 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 560.35.03              Driver Version: 560.35.03      CUDA Version: 12.6     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA TITAN RTX               Off |   00000000:02:00.0 Off |                  N/A |
+| 30%   38C    P0             61W /  280W |       1MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA TITAN RTX               Off |   00000000:82:00.0 Off |                  N/A |
+| 26%   36C    P0             61W /  280W |       1MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+/var/scratch/dpp2567/CS224n-2024-Spring/Project/code/base_bert.py:115: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  state_dict = torch.load(resolved_archive_file, map_location="cpu")
+usage: mlm_pretrain.py [-h] [--data_dir DATA_DIR] --pretrained_path
+                       PRETRAINED_PATH [--save_path SAVE_PATH]
+                       [--max_len MAX_LEN] [--batch_size BATCH_SIZE] [--lr LR]
+                       [--weight_decay WEIGHT_DECAY] [--steps STEPS]
+                       [--warmup_steps WARMUP_STEPS] [--seed SEED]
+                       [--device DEVICE]
+mlm_pretrain.py: error: the following arguments are required: --pretrained_path
+Loaded 8544 train examples from data/ids-sst-train.csv
+Loaded 283003 train examples from data/quora-train.csv
+Loaded 6040 train examples from data/sts-train.csv
+Loaded 1101 train examples from data/ids-sst-dev.csv
+Loaded 40429 train examples from data/quora-dev.csv
+Loaded 863 train examples from data/sts-dev.csv
+Traceback (most recent call last):
+  File "/var/scratch/dpp2567/CS224n-2024-Spring/Project/code/config.py", line 152, in get_config_dict
+    resolved_config_file = cached_path(
+  File "/var/scratch/dpp2567/CS224n-2024-Spring/Project/code/utils.py", line 271, in cached_path
+    output_path = get_from_cache(
+  File "/var/scratch/dpp2567/CS224n-2024-Spring/Project/code/utils.py", line 152, in get_from_cache
+    r.raise_for_status()
+  File "/var/scratch/dpp2567/miniconda3/envs/cs224n_dfp/lib/python3.8/site-packages/requests/models.py", line 943, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 401 Client Error: Unauthorized for url: https://huggingface.co/additional_pretrained_bert/resolve/main/config.json
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "multitask_classifier.py", line 388, in <module>
+    train_multitask(args)
+  File "multitask_classifier.py", line 209, in train_multitask
+    model = MultitaskBERT(config, bert_checkpoint=args.bert_checkpoint)
+  File "multitask_classifier.py", line 70, in __init__
+    self.bert = BertModel.from_pretrained(bert_checkpoint)
+  File "/var/scratch/dpp2567/CS224n-2024-Spring/Project/code/base_bert.py", line 55, in from_pretrained
+    config, model_kwargs = cls.config_class.from_pretrained(
+  File "/var/scratch/dpp2567/CS224n-2024-Spring/Project/code/config.py", line 96, in from_pretrained
+    config_dict, kwargs = cls.get_config_dict(pretrained_model_name_or_path, **kwargs)
+  File "/var/scratch/dpp2567/CS224n-2024-Spring/Project/code/config.py", line 170, in get_config_dict
+    raise EnvironmentError(msg)
+OSError: Can't load config for 'additional_pretrained_bert'. Make sure that:
+
+- 'additional_pretrained_bert' is a correct model identifier listed on 'https://huggingface.co/models'
+
+- or 'additional_pretrained_bert' is the correct path to a directory containing a config.json file
+
+
+Finished at Tue Mar  3 12:58:04 CET 2026
