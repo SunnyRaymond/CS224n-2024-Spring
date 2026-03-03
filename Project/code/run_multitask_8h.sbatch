@@ -16,7 +16,12 @@ conda activate cs224n_dfp
 module load cuda12.6/toolkit/12.6
 nvidia-smi
 
-python mlm_pretrain.py --use_gpu --epochs 2 --batch_size 16 --lr 5e-5 --output domain-mlm-pretrain.pt
+if [ -f domain-mlm-pretrain.pt ]; then
+  echo "Found existing domain-mlm-pretrain.pt, skipping MLM pretraining."
+else
+  echo "domain-mlm-pretrain.pt not found, running MLM pretraining."
+  python mlm_pretrain.py --use_gpu --epochs 2 --batch_size 16 --lr 5e-5 --output domain-mlm-pretrain.pt
+fi
 
 python multitask_classifier.py --fine-tune-mode last-linear-layer --use_gpu --lr 1e-5 --pretrained_bert_path domain-mlm-pretrain.pt
 python multitask_classifier.py --fine-tune-mode full-model --use_gpu --lr 1e-5 --pretrained_bert_path domain-mlm-pretrain.pt
