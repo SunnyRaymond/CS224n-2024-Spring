@@ -21,6 +21,29 @@ And Part 2 targets:
 
 Follow `setup.sh` to properly setup a conda environment and install dependencies.
 
+## Additional Pretraining (Domain-Adaptive MLM)
+
+Run from the `Project/code` directory.
+
+1. MLM pretraining on target-domain training text:
+
+```bash
+python mlm_pretrain.py --use_gpu --epochs 2 --batch_size 16 --lr 5e-5 --output domain-mlm-pretrain.pt
+```
+
+2. Multitask training initialized from the MLM-pretrained BERT:
+
+```bash
+python multitask_classifier.py --fine-tune-mode last-linear-layer --use_gpu --lr 1e-5 --pretrained_bert_path domain-mlm-pretrain.pt
+python multitask_classifier.py --fine-tune-mode full-model --use_gpu --lr 1e-5 --pretrained_bert_path domain-mlm-pretrain.pt
+```
+
+3. Optional single-command SLURM run:
+
+```bash
+sbatch run_multitask_8h.sbatch
+```
+
 ## Acknowledgement
 
 The BERT implementation part of the project was adapted from the "minbert" assignment developed at Carnegie Mellon University's [CS11-711 Advanced NLP](http://phontron.com/class/anlp2021/index.html),

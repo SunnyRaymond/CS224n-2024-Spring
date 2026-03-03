@@ -16,11 +16,9 @@ conda activate cs224n_dfp
 module load cuda12.6/toolkit/12.6
 nvidia-smi
 
+python mlm_pretrain.py --use_gpu --epochs 2 --batch_size 16 --lr 5e-5 --output domain-mlm-pretrain.pt
 
-python classifier.py --fine-tune-mode last-linear-layer --use_gpu --lr 1e-3
-python classifier.py --fine-tune-mode full-model --use_gpu --lr 1e-5
-
-python multitask_classifier.py --fine-tune-mode last-linear-layer --use_gpu --lr 1e-5
-python multitask_classifier.py --fine-tune-mode full-model --use_gpu --lr 1e-5
+python multitask_classifier.py --fine-tune-mode last-linear-layer --use_gpu --lr 1e-5 --pretrained_bert_path domain-mlm-pretrain.pt
+python multitask_classifier.py --fine-tune-mode full-model --use_gpu --lr 1e-5 --pretrained_bert_path domain-mlm-pretrain.pt
 
 echo "Finished at $(date)"

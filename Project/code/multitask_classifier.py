@@ -12,7 +12,7 @@ Running `python multitask_classifier.py` trains and tests your MultitaskBERT and
 writes all required submission files.
 '''
 
-import random, numpy as np, argparse
+import random, numpy as np, argparse, os
 from types import SimpleNamespace
 
 import torch
@@ -64,6 +64,33 @@ class MultitaskBERT(nn.Module):
     def __init__(self, config):
         super(MultitaskBERT, self).__init__()
         self.bert = BertModel.from_pretrained('bert-base-uncased')
+        pretrained_bert_path = getattr(config, "pretrained_bert_path", None)
+        if pretrained_bert_path:
+            if os.path.exists(pretrained_bert_path):
+                try:
+                    ckpt = torch.load(pretrained_bert_path, map_location="cpu")
+                    state_dict = ckpt["model"] if isinstance(ckpt, dict) and "model" in ckpt else ckpt
+                    if isinstance(ckpt, dict) and "bert_state_dict" in ckpt:
+                        state_dict = ckpt["bert_state_dict"]
+                    elif any(k.startswith("bert.") for k in state_dict.keys()):
+                        state_dict = {
+                            k[len("bert."):]: v for k, v in state_dict.items() if k.startswith("bert.")
+                        }
+                    missing, unexpected = self.bert.load_state_dict(state_dict, strict=False)
+                    print(
+                        f"Loaded domain-pretrained BERT from {pretrained_bert_path} "
+                        f"(missing={len(missing)}, unexpected={len(unexpected)})"
+                    )
+                except Exception as e:
+                    print(
+                        f"Warning: failed to load pretrained checkpoint at {pretrained_bert_path} "
+                        f"({e}). Falling back to bert-base-uncased."
+                    )
+            else:
+                print(
+                    f"Warning: pretrained checkpoint not found at {pretrained_bert_path}. "
+                    f"Falling back to bert-base-uncased."
+                )
         # last-linear-layer mode does not require updating BERT paramters.
         assert config.fine_tune_mode in ["last-linear-layer", "full-model"]
         for param in self.bert.parameters():
@@ -186,7 +213,8 @@ def train_multitask(args):
               'num_labels': num_labels,
               'hidden_size': 768,
               'data_dir': '.',
-              'fine_tune_mode': args.fine_tune_mode}
+              'fine_tune_mode': args.fine_tune_mode,
+              'pretrained_bert_path': args.pretrained_bert_path}
 
     config = SimpleNamespace(**config)
 
@@ -353,6 +381,8 @@ def get_args():
     parser.add_argument("--batch_size", help='sst: 64, cfimdb: 8 can fit a 12GB GPU', type=int, default=8)
     parser.add_argument("--hidden_dropout_prob", type=float, default=0.3)
     parser.add_argument("--lr", type=float, help="learning rate", default=1e-5)
+    parser.add_argument("--pretrained_bert_path", type=str, default=None,
+                        help="Optional checkpoint path for domain-adaptive MLM pretrained BERT.")
 
     args = parser.parse_args()
     return args
