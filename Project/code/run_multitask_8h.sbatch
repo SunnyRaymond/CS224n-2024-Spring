@@ -3,7 +3,7 @@
 #SBATCH --nodelist=node221
 #SBATCH --gres=gpu:1
 #SBATCH --constraint=gpunode
-#SBATCH -t 16:00:00
+#SBATCH -t 7-00:00:00
 #SBATCH -J cs224n
 #SBATCH -o logs/%x-%j.out
 
